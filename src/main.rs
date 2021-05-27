@@ -77,7 +77,6 @@ fn main() {
     lds(&mut seen.clone(), &mut unseen.clone(), 0, d_max, 0, &cost, &mut pcc, &AdvancedBound, &Order);
     println!("{}", pcc);
     println!("Elapsed time: {:.3}s", clock.elapsed().as_secs_f32());
-
 }
 
 fn permute(seen: &mut Nodes, unseen: &mut Nodes) {
@@ -121,7 +120,9 @@ fn permute_len_pcc(
 
     if unseen.is_empty() {
         let path_len = path_len + cost[seen[seen.len() - 1]][0];
-        println!("{}", path_len);
+        if path_len < *pcc {
+            println!("{:?}", seen);
+        }
         *pcc = Cost::min(*pcc, path_len);
     } else {
         for i in 0..unseen.len() {
@@ -148,21 +149,19 @@ fn permute_len_pcc_bounded<B>(
     if unseen.is_empty() {
         let path_len = path_len + cost[seen[seen.len() - 1]][0];
         *pcc = Cost::min(*pcc, path_len);
-    } else {
+    } else if path_len < *pcc && path_len + bound.invoke(seen, unseen, cost) < *pcc {
         for i in 0..unseen.len() {
             seen.push(unseen.swap_remove(i));
 
             let new_path_len = path_len + cost[seen[seen.len() - 2]][seen[seen.len() - 1]];
-            if new_path_len + bound.invoke(seen, unseen, cost) < *pcc {
-                permute_len_pcc_bounded(
-                    seen,
-                    unseen,
-                    new_path_len,
-                    cost,
-                    pcc,
-                    bound,
-                );
-            }
+            permute_len_pcc_bounded(
+                seen,
+                unseen,
+                new_path_len,
+                cost,
+                pcc,
+                bound,
+            );
 
             unseen.swap_insert(i, seen.pop().unwrap());
         }
@@ -186,25 +185,22 @@ fn permute_len_pcc_bounded_and_ordered<B, F>(
     if unseen.is_empty() {
         let path_len = path_len + cost[seen[seen.len() - 1]][0];
         *pcc = Cost::min(*pcc, path_len);
-    } else {
+    } else if path_len < *pcc && path_len + bound.invoke(seen, &unseen, cost) < *pcc {
         let mut unseen = unseen.clone();
         unseen.sort_by(|&lhs, &rhs| comparison.cmp(lhs, rhs, seen, cost));
         for i in 0..unseen.len() {
             seen.push(unseen.swap_remove(i));
 
             let new_path_len = path_len + cost[seen[seen.len() - 2]][seen[seen.len() - 1]];
-            if new_path_len < *pcc && new_path_len + bound.invoke(seen, &unseen, cost) < *pcc {
-                permute_len_pcc_bounded_and_ordered(
-                    seen,
-                    &mut unseen,
-                    new_path_len,
-                    cost,
-                    pcc,
-                    bound,
-                    comparison,
-                );
-            }
-
+            permute_len_pcc_bounded_and_ordered(
+                seen,
+                &mut unseen,
+                new_path_len,
+                cost,
+                pcc,
+                bound,
+                comparison,
+            );
             unseen.swap_insert(i, seen.pop().unwrap());
         }
     }
@@ -229,7 +225,7 @@ fn lds<B, F>(
     if unseen.is_empty() {
         let path_len = path_len + cost[seen[seen.len() - 1]][0];
         *pcc = Cost::min(*pcc, path_len);
-    } else {
+    } else if discrepancy < max_discrepancy && path_len < *pcc && path_len + bound.invoke(seen, unseen, cost) < *pcc {
         let mut unseen = unseen.clone();
 
         unseen.sort_by(|&lhs, &rhs| comparison.cmp(lhs, rhs, seen, cost));
@@ -237,19 +233,17 @@ fn lds<B, F>(
             seen.push(unseen.swap_remove(i));
 
             let new_path_len = path_len + cost[seen[seen.len() - 2]][seen[seen.len() - 1]];
-            if discrepancy + i <= max_discrepancy && new_path_len + bound.invoke(seen, &unseen, cost) < *pcc {
-                lds(
-                    seen,
-                    &mut unseen,
-                    discrepancy + i,
-                    max_discrepancy,
-                    new_path_len,
-                    cost,
-                    pcc,
-                    bound,
-                    comparison,
-                );
-            }
+            lds(
+                seen,
+                &mut unseen,
+                discrepancy + i,
+                max_discrepancy,
+                new_path_len,
+                cost,
+                pcc,
+                bound,
+                comparison,
+            );
 
             unseen.swap_insert(i, seen.pop().unwrap());
         }

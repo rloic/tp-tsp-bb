@@ -19,7 +19,7 @@ pub struct AdvancedBound;
 impl BoundFn for AdvancedBound {
     fn invoke(&self, seen: &Nodes, unseen: &Nodes, cost: &Matrix<Cost>) -> Cost {
         let last_seen = seen[seen.len() - 1];
-        let mut l = cost[last_seen][0];
+        let mut l = Cost::MAX;
         for &sj in unseen {
             if cost[last_seen][sj] < l {
                 l = cost[last_seen][sj];
