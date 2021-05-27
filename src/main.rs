@@ -120,9 +120,6 @@ fn permute_len_pcc(
 
     if unseen.is_empty() {
         let path_len = path_len + cost[seen[seen.len() - 1]][0];
-        if path_len < *pcc {
-            println!("{:?}", seen);
-        }
         *pcc = Cost::min(*pcc, path_len);
     } else {
         for i in 0..unseen.len() {
