@@ -98,7 +98,8 @@ fn permute_len(seen: &mut Nodes, unseen: &mut Nodes, path_len: i32, cost: &Matri
     assert!(!seen.is_empty() && seen[0] == 0);
 
     if unseen.is_empty() {
-        println!("{}", path_len + cost[seen[seen.len() - 1]][0]);
+        let path_len = path_len + cost[seen[seen.len() - 1]][0];
+        println!("{}", path_len);
     } else {
         for i in 0..unseen.len() {
             seen.push(unseen.swap_remove(i));
